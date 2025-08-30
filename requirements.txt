@@ -1,0 +1,7 @@
+Flask
+APScheduler
+zabbix-utils
+python-dotenv
+gunicorn
+SQLAlchemy>=1.4 # Add SQLAlchemy for persistent job store
+Faker

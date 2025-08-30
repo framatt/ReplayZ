@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReplayZ - Zabbix Data Replicator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ReplayZ Logo" class="logo">
+                <h1>ReplayZ</h1>
+            </div>
+            <p class="tagline">Your solution for replicating and replaying Zabbix host data.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="config-section" class="card">
+            <h2 class="card-title"><i class="fas fa-user-shield"></i> Configuration & Authentication</h2>
+            <form id="config-form">
+                <div class="form-group">
+                    <label for="source_url"><i class="fas fa-link"></i> Source Zabbix API URL</label>
+                    <input type="url" id="source_url" name="source_url" required placeholder="e.g., https://source.zabbix.com/api_jsonrpc.php">
+                </div>
+                <div class="form-group">
+                    <label for="source_token"><i class="fas fa-key"></i> Source Zabbix API Token</label>
+                    <input type="password" id="source_token" name="source_token" required>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-group">
+                    <label for="dest_url"><i class="fas fa-link"></i> Destination Zabbix API URL</label>
+                    <input type="url" id="dest_url" name="dest_url" required placeholder="e.g., https://dest.zabbix.com/api_jsonrpc.php">
+                </div>
+                <div class="form-group">
+                    <label for="dest_token"><i class="fas fa-key"></i> Destination Zabbix API Token</label>
+                    <input type="password" id="dest_token" name="dest_token" required>
+                </div>
+                <div class="form-group">
+                    <label for="dest_trapper_host"><i class="fas fa-network-wired"></i> Destination Trapper Host/IP</label>
+                    <input type="text" id="dest_trapper_host" name="dest_trapper_host" required placeholder="IP or DNS of Zabbix Server/Proxy">
+                </div>
+                <div class="form-group">
+                    <label for="dest_trapper_port"><i class="fas fa-ethernet"></i> Destination Trapper Port</label>
+                    <input type="number" id="dest_trapper_port" name="dest_trapper_port" value="10051" required>
+                </div>
+                
+                <button type="button" id="connect-button" class="btn primary-btn"><i class="fas fa-plug"></i> Connect & Load Hosts</button>
+            </form>
+            <p class="note">Note: If no values are provided, default values from the .env file will be used.</p>
+            <p id="config-status" class="status-message"></p>
+        </section>
+
+        <section id="host-selection-section" class="card" style="display: none;">
+            <h2 class="card-title"><i class="fas fa-list-check"></i> Select Host to Replicate</h2>
+            <div class="form-group">
+                <label for="host-select"><i class="fas fa-server"></i> Source Host</label>
+                <select id="host-select" class="host-select-style">
+                    <option value="">-- Select a Host --</option>
+                </select>
+            </div>
+            <button type="button" id="replicate-button" class="btn secondary-btn" disabled><i class="fas fa-play"></i> Replicate Host</button>
+                <p id="replication-start-status" class="status-message"></p>
+        </section>
+
+        <section id="orphaned-hosts-section" class="card">
+            <h2 class="card-title"><i class="fas fa-ghost"></i> Orphaned Host Management</h2>
+            <button type="button" id="check-orphans-button" class="btn secondary-btn"><i class="fas fa-search"></i> Check for Orphaned Hosts</button>
+            <p id="orphans-status" class="status-message"></p>
+            <div id="orphaned-hosts-list" class="list-container">
+                <!-- Orphaned hosts will be listed here -->
+            </div>
+            <div id="relink-form-container" style="display: none;">
+                <h3>Re-link Orphaned Host</h3>
+                <div class="form-group">
+                    <label for="relink-dest-host-id"><i class="fas fa-server"></i> Destination Host ID</label>
+                    <input type="text" id="relink-dest-host-id" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="relink-dest-host-name"><i class="fas fa-tag"></i> Destination Host Name</label>
+                    <input type="text" id="relink-dest-host-name" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="relink-source-host-id"><i class="fas fa-link"></i> Source Host ID (Manual Entry)</label>
+                    <input type="text" id="relink-source-host-id" placeholder="Enter original Source Host ID">
+                    <small class="form-text text-muted">If a hint was provided, use that Source Host ID.</small>
+                </div>
+                <button type="button" id="relink-button" class="btn primary-btn"><i class="fas fa-redo"></i> Re-link Host</button>
+                <p id="relink-status" class="status-message"></p>
+            </div>
+        </section>
+    </main>
+
+    <section id="status-section" class="card">
+        <h2 class="card-title"><i class="fas fa-info-circle"></i> Replication Status & History</h2>
+        <div class="status-controls">
+            <div class="host-filter">
+                <label for="host-filter-input"><i class="fas fa-search"></i> Filter by Host:</label>
+                <input type="text" id="host-filter-input" placeholder="Type host name or ID..." class="host-filter-input">
+            </div>
+            <button class="btn small-btn" id="clear-completed-btn"><i class="fas fa-trash"></i> Clear Completed</button>
+        </div>
+        <div id="replication-status-list" class="status-list">
+            <div class="status-empty">
+                <i class="fas fa-info-circle"></i>
+                <p>No replication tasks yet. Start by selecting a host to replicate.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>2025 ReplayZ. Built for Zabbix enthusiasts.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
