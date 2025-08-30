@@ -299,7 +299,36 @@ document.addEventListener('DOMContentLoaded', async () => { // Made the event li
         const timestamp = new Date().toLocaleString();
         const shortTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        // Create the enhanced status item HTML
+        // Calculate progress percentage based on status and message content
+        let progressPercentage = 0;
+        let progressText = '';
+
+        if (statusType === 'completed') {
+            progressPercentage = 100;
+            progressText = 'Completed';
+        } else if (statusType === 'failed') {
+            progressPercentage = 0;
+            progressText = 'Failed';
+        } else if (statusType === 'running' || statusType === 'replaying') { // Added 'replaying' status
+            if (statusObj && typeof statusObj.progress === 'number') {
+                progressPercentage = Math.round(statusObj.progress);
+                // Extract total processed count from message if available
+                const progressMatch = statusText.match(/\((\d+)\/(\d+)\s*total\)/);
+                if (progressMatch) {
+                    progressText = `${progressMatch[1]}/${progressMatch[2]} processed`;
+                } else {
+                    progressText = 'Processing...';
+                }
+            } else {
+                progressPercentage = 0; // Default to 0 if progress not available
+                progressText = 'Processing...';
+            }
+        } else if (statusType === 'pending') {
+            progressPercentage = 0; // Start at 0 for pending
+            progressText = 'Pending';
+        }
+
+        // Create the enhanced status item HTML with individual progress bar
 statusItem.innerHTML = `
   <div class="status-content">
     <div class="status-header">
@@ -313,7 +342,12 @@ statusItem.innerHTML = `
         </button>` : ''}
     </div>
     <div class="status-message">${statusText}</div>
-    ${statusType === 'running' ? `<div class="status-progress indeterminate"></div>` : ''}
+    <div class="host-progress-bar">
+      <div class="host-progress-container">
+        <div class="host-progress-fill" style="width: ${progressPercentage}%"></div>
+      </div>
+      <div class="host-progress-text">${progressText} (${progressPercentage}%)</div>
+    </div>
   </div>
 `;
 
@@ -333,6 +367,8 @@ statusItem.innerHTML = `
                 statusItem.style.transform = 'translateY(0)';
             }, 10);
         }
+
+
     }
 
     async function pollStatus() {

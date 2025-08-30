@@ -323,6 +323,37 @@ body {
 }
 
 
+/* Individual Host Progress Bars */
+.host-progress-bar {
+    margin-top: 0.5em;
+}
+
+.host-progress-container {
+    width: 100%;
+    height: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    position: relative;
+}
+
+.host-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-accent-color));
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.host-progress-text {
+    text-align: center;
+    margin-top: 0.3em;
+    font-size: 0.75em;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
 /* Status Section Enhancements - Optimized for Space */
 .status-controls {
     display: flex;
